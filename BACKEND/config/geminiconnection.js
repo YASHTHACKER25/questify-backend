@@ -1,28 +1,18 @@
 import "dotenv/config";
-//import { GoogleGenAI } from "@google/genai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_API_KEY,
-});
+// Initialize Gemini
+const ai = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-/**
- * Generic Gemini API call
- * @param {string} prompt - What you want Gemini to do
- * @returns {string|null} response text
- */
 export async function callGemini(prompt) {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const text = response.candidates[0].content.parts[0].text.trim();
-    return text;
+    const result = await model.generateContent(prompt);
+
+    return result.response.text().trim();
   } catch (err) {
     console.error("Gemini API error:", err);
     return null;
   }
 }
-
