@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "BACKEND/index.js",
+  "type": "module",
   "scripts": {
     "start": "node BACKEND/index.js"
   },
@@ -13,9 +14,10 @@
     "mongoose": "^8.0.0",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
     "express": "^5.1.0",
     "nodemailer": "^7.0.6",
     "socket.io": "^4.8.1",
-    "dotenv": "^16.4.0"
+    "jsonwebtoken": "^9.0.2"
   }
 }
