@@ -82,16 +82,71 @@ export const createCommentNotification = async (commentDoc) => {
  */
 export const getNotificationsByUser = async (userId) => {
   try {
-    return await Notification.find({ receiverId: userId })
-      .populate("senderId", "username")
-      .populate("questionId", "title")
+    const raw = await Notification.find({ receiverId: userId })
+      .populate("senderId", "_id username")
+      .populate("questionId", "title")       // try populate question
       .sort({ createdAt: -1 });
+
+    const result = [];
+
+    for (const notifDoc of raw) {
+      const n = notifDoc.toObject();
+      
+      // Normalize questionId (string or null)
+      let q = n.questionId;
+      let questionId =
+        q && typeof q === "object"
+          ? String(q._id ?? q.id)
+          : q
+          ? String(q)
+          : null;
+
+      // If questionId is missing → find from Answer
+      if (!questionId && n.answerId) {
+        const answer = await Answer.findById(n.answerId).select("questionid");
+        if (answer) {
+          questionId = String(answer.questionid);
+        }
+      }
+
+      // Normalize answerId
+      const a = n.answerId;
+      const answerId =
+        a && typeof a === "object" ? String(a._id ?? a.id) : a ? String(a) : null;
+
+      // Get question title (if populated)
+      const questionTitle =
+        q && typeof q === "object" && q.title ? q.title : null;
+
+      result.push({
+        _id: String(n._id),
+        type: n.type,
+        message: n.message,
+        createdAt: n.createdAt,
+        isRead: !!n.isRead,
+
+        // Always valid now:
+        questionId,
+        answerId,
+
+        questionTitle,
+
+        senderId:
+          n.senderId && typeof n.senderId === "object"
+            ? {
+                _id: String(n.senderId._id),
+                username: n.senderId.username,
+              }
+            : n.senderId,
+      });
+    }
+
+    return result;
   } catch (error) {
     console.error("❌ Error fetching notifications:", error);
     return [];
   }
 };
-
 /**
  * 🟢 Mark a notification as read
  */
@@ -102,3 +157,4 @@ export const markNotificationAsRead = async (id) => {
     console.error("❌ Error marking notification as read:", error);
   }
 };
+
